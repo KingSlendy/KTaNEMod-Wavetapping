@@ -356,7 +356,7 @@ public class scr_wavetapping : MonoBehaviour {
     }
 
     void OnSubmitPress() {
-        BombAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+        BombAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, SubmitButton.transform);
         ModuleSelect.AddInteractionPunch(0.5f);
 
         if (moduleSolved || beatStage) return;
@@ -407,9 +407,9 @@ public class scr_wavetapping : MonoBehaviour {
         nowPattern = nowPattern.Insert(buttonPressed, addStr);
     }
 
-#pragma warning disable 414
+    #pragma warning disable 414
     private readonly string TwitchHelpMessage = @"!{0} press A1 B39 C123... (column [A to I] and row [1 to 9] to press [not counting the edges so A1 will be considered as B2 on the grid] [you can input multiple rows in the same column]) | !{0} submit/sub/s (submits current pattern)";
-#pragma warning restore 414
+    #pragma warning restore 414
 
     KMSelectable[] ProcessTwitchCommand(string command) {
         command = command.ToLowerInvariant().Trim();
@@ -435,5 +435,23 @@ public class scr_wavetapping : MonoBehaviour {
         }
 
         return (Regex.IsMatch(command, @"^\s*(submit|sub|s)\s*$")) ? new[] { SubmitButton } : null;
+    }
+
+    IEnumerator TwitchHandleForcedSolve()
+    {
+        int start = nowStage;
+        for (int i = start; i < 3; i++)
+        {
+            while (beatStage) { yield return true; };
+            for (int j = 0; j < correctPatterns[i].Length; j++)
+            {
+                if ((correctPatterns[i][j] == 'X' && nowPattern[j] == 'O') || (correctPatterns[i][j] == 'O' && nowPattern[j] == 'X'))
+                {
+                    ModuleButtons[j].OnInteract();
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            SubmitButton.OnInteract();
+        }
     }
 }
